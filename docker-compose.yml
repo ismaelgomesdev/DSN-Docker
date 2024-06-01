@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    image: backend-image
+    container_name: backend
+    depends_on:
+      - minio
+      - database
+    ports:
+      - "3000:3000"
+    environment:
+      - AWS_REGION=us-east-1
+      - RDS_HOST=database
+      - RDS_PORT=5432
+      - RDS_DB=rds-trab1
+      - RDS_USER=postgres
+      - RDS_PASSWORD=12345678
+      - S3_BUCKET=s2-trab1
+      - MINIO_HOST=http://localhost:9000
+
+  frontend:
+    build:
+      context: ./frontend
+    image: frontend-image
+    container_name: frontend
+    ports:
+      - "80:80"
+
+  database:
+    image: postgres:13
+    container_name: database
+    environment:
+      POSTGRES_DB: rds-trab1
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345678
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+
+volumes:
+  db-data:
+  minio-data:

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Produtos</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Gestão de Produtos</h1>
+
+        <form id="add-product-form" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="name">Nome do Produto:</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Descrição:</label>
+                <textarea class="form-control" id="description" name="description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="image">Imagem do Produto:</label>
+                <input type="file" accept="image/jpg" class="form-control-file" id="image" name="image" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Adicionar Produto</button>
+        </form>
+
+        <hr>
+
+        <div id="product-list"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            const backendUrl = 'http://localhost:3000';
+
+            function loadProducts() {
+                $.get(`${backendUrl}/products`, function (products) {
+                    $('#product-list').empty();
+                    products.forEach(product => {
+                        $('#product-list').append(`
+                            <div class="card mb-3" id="product-${product.id}">
+                                <div class="card-body">
+                                    <h5 class="card-title">${product.name}</h5>
+                                    <p class="card-text">${product.description}</p>
+                                    <img src="${product.imageurl}" alt="${product.name}" class="img-fluid">
+                                    <button onclick="deleteProduct('${product.id}')" class="btn btn-danger">Deletar</button>
+                                </div>
+                            </div>
+                        `);
+                    });
+                });
+            }
+
+            $('#add-product-form').submit(function (event) {
+                event.preventDefault();
+                var formData = new FormData(this);
+                $.ajax({
+                    url: `${backendUrl}/product`,
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        loadProducts();
+                        $('#add-product-form').trigger('reset');
+                        alert('Produto adicionado!');
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Erro ao adicionar produto: ' + xhr.responseText);
+                    }
+                });
+            });
+
+            window.deleteProduct = function (productId) {
+                $.ajax({
+                    url: `${backendUrl}/product/${productId}`,
+                    type: 'DELETE',
+                    success: function (response) {
+                        $(`#product-${productId}`).remove();
+                        alert('Produto deletado!');
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Erro ao deletar produto: ' + xhr.responseText);
+                    }
+                });
+            };
+
+            loadProducts();
+        });
+    </script>
+</body>
+</html>
